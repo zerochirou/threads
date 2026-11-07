@@ -13,15 +13,19 @@
 	},
 	"services": [
 		{
-			// Self-reference service binding, the service name must match the worker name
-			// see https://opennext.js.org/cloudflare/caching
 			"binding": "WORKER_SELF_REFERENCE",
 			"service": "threads"
 		}
 	],
 	"images": {
-		// Enable image optimization
-		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "threads-db",
+			"database_id": "cfc47db2-2891-4d44-827e-2b184603f936",
+			"migrations_dir": "drizzle"
+		}
+	]
 }
