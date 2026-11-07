@@ -11,14 +11,22 @@ import { cn } from "@/lib/utils"
 export interface ProfileTabsSectionProps {
   userAvatarUrl?: string
   userFallback?: string
+  userName?: string
   posts?: ThreadPostItem[]
+  replies?: ThreadPostItem[]
+  onToggleLike?: (postId: string) => void
+  onDeleted?: (postId: string) => void
   className?: string
 }
 
 export function ProfileTabsSection({
   userAvatarUrl = "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=threads-user",
   userFallback = "ZC",
+  userName = "zerochirou",
   posts = [],
+  replies = [],
+  onToggleLike,
+  onDeleted,
   className,
 }: ProfileTabsSectionProps) {
   return (
@@ -64,29 +72,47 @@ export function ProfileTabsSection({
             <PostComposer
               userAvatarUrl={userAvatarUrl}
               userFallback={userFallback}
-              userName="zerochirou"
+              userName={userName}
             />
           </div>
 
           
-          <FinishProfileCards remainingCount={1} />
+          {posts.length === 0 && <FinishProfileCards remainingCount={1} />}
 
-          
           {posts.length > 0 && (
             <div className="divide-y divide-neutral-200/80 dark:divide-neutral-800">
               {posts.map((post) => (
-                <ThreadCard key={post.id} post={post} />
+                <ThreadCard
+                  key={post.id}
+                  post={post}
+                  onToggleLike={onToggleLike}
+                  onDeleted={onDeleted}
+                />
               ))}
             </div>
           )}
         </TabsContent>
 
-        
         <TabsContent
           value="replies"
-          className="p-12 text-center text-sm text-neutral-500 dark:text-neutral-400 m-0"
+          className="flex flex-col m-0 outline-none"
         >
-          No replies yet
+          {replies.length > 0 ? (
+            <div className="divide-y divide-neutral-200/80 dark:divide-neutral-800">
+              {replies.map((reply) => (
+                <ThreadCard
+                  key={reply.id}
+                  post={reply}
+                  onToggleLike={onToggleLike}
+                  onDeleted={onDeleted}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-sm text-neutral-500 dark:text-neutral-400">
+              No replies yet
+            </div>
+          )}
         </TabsContent>
 
         

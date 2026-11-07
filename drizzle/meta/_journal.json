@@ -8,6 +8,13 @@
       "when": 1794026245654,
       "tag": "0000_absurd_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1794043739468,
+      "tag": "0001_wealthy_abomination",
+      "breakpoints": true
     }
   ]
 }

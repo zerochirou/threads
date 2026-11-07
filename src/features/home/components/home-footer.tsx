@@ -14,7 +14,7 @@ export function HomeFooter({ className }: HomeFooterProps) {
   return (
     <footer
       className={cn(
-        "flex flex-col items-center gap-1.5 text-center text-xs text-muted-foreground/80 py-6 select-none",
+        "flex flex-col items-center gap-1.5 text-center text-xs text-muted-foreground/80 py-6  ",
         className
       )}
     >

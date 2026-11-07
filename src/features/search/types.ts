@@ -8,4 +8,5 @@ export interface SearchUserItem {
   verified?: boolean
   followersCountText?: string
   isFollowing?: boolean
+  isSelf?: boolean
 }

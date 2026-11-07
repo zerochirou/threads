@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { RiVerifiedBadgeFill } from "@remixicon/react"
 import type { FollowSuggestion } from "../types"
 import {
@@ -23,23 +24,28 @@ export function FollowItem({
   className,
 }: FollowItemProps) {
   return (
-    <div className={cn("flex items-start gap-3 py-3 select-none", className)}>
+    <div className={cn("flex items-start gap-3 py-3", className)}>
       {/* Avatar */}
-      <Avatar size="default" className="size-10 shrink-0 ring-1 ring-border/80">
-        <AvatarImage src={suggestion.avatarUrl} alt={suggestion.username} />
-        <AvatarFallback className="bg-neutral-800 text-xs font-semibold text-white">
-          {suggestion.fallback}
-        </AvatarFallback>
-      </Avatar>
+      <Link href={`/profile/${suggestion.username}`}>
+        <Avatar size="default" className="size-10 shrink-0 ring-1 ring-border/80 cursor-pointer hover:opacity-90 transition-opacity">
+          <AvatarImage src={suggestion.avatarUrl} alt={suggestion.username} />
+          <AvatarFallback className="bg-neutral-800 text-xs font-semibold text-white">
+            {suggestion.fallback}
+          </AvatarFallback>
+        </Avatar>
+      </Link>
 
       {/* Info & Content */}
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
         {/* Name & Follow Button Row */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 min-w-0">
-            <span className="font-semibold text-sm text-foreground hover:underline cursor-pointer truncate">
+            <Link
+              href={`/profile/${suggestion.username}`}
+              className="font-semibold text-sm text-foreground hover:underline cursor-pointer truncate"
+            >
               {suggestion.username}
-            </span>
+            </Link>
             {suggestion.verified && (
               <RiVerifiedBadgeFill className="size-3.5 text-sky-500 shrink-0" />
             )}
@@ -50,7 +56,7 @@ export function FollowItem({
             variant={suggestion.isFollowing ? "secondary" : "outline"}
             onClick={() => onToggleFollow?.(suggestion.id)}
             className={cn(
-              "h-8 rounded-xl px-4 text-xs font-semibold transition-all cursor-pointer shrink-0",
+              "h-9 rounded-sm px-4 font-semibold transition-all cursor-pointer shrink-0",
               suggestion.isFollowing
                 ? "text-muted-foreground hover:text-foreground"
                 : "border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-foreground"

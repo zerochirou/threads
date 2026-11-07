@@ -1,35 +1,52 @@
 "use client"
 
 import * as React from "react"
+import type { ThreadPostItem } from "@/features/content-scrollbar/types"
 import { ThreadAvatar } from "@/features/content-scrollbar"
 import { PostComposerDialog } from "./post-composer-dialog"
 import { Button } from "@/components/ui/button"
+import { useSession } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
 export interface PostComposerProps {
   userAvatarUrl?: string
   userFallback?: string
   userName?: string
-  onPostCreated?: (threads: string[]) => void
+  onPostCreated?: (threads: string[], createdPost?: ThreadPostItem) => void
   className?: string
 }
 
 export function PostComposer({
-  userAvatarUrl = "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=threads-user",
-  userFallback = "ZC",
-  userName = "zerochirou",
+  userAvatarUrl,
+  userFallback,
+  userName,
   onPostCreated,
   className,
 }: PostComposerProps) {
   const [isOpen, setIsOpen] = React.useState(false)
+  const { data: sessionData } = useSession()
+
+  const authUser = sessionData?.user
+  const resolvedUserName =
+    userName ||
+    authUser?.username ||
+    authUser?.email?.split("@")[0]?.toLowerCase() ||
+    "zerochirou"
+  const resolvedAvatarUrl =
+    userAvatarUrl ||
+    authUser?.image ||
+    `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${encodeURIComponent(resolvedUserName)}`
+  const resolvedFallback =
+    userFallback ||
+    (authUser?.name || resolvedUserName).slice(0, 2).toUpperCase()
 
   return (
     <>
-      <div className={cn("px-6 pt-6 pb-4 flex items-center gap-3", className)}>
+      <div className={cn("px-4 sm:px-6 pt-4 sm:pt-6 pb-3.5 sm:pb-4 flex items-center gap-3", className)}>
         <ThreadAvatar
-          src={userAvatarUrl}
-          alt="Your avatar"
-          fallback={userFallback}
+          src={resolvedAvatarUrl}
+          alt={resolvedUserName}
+          fallback={resolvedFallback}
           size="default"
         />
 
@@ -54,11 +71,12 @@ export function PostComposer({
       <PostComposerDialog
         open={isOpen}
         onOpenChange={setIsOpen}
-        userName={userName}
-        userAvatarUrl={userAvatarUrl}
-        userFallback={userFallback}
+        userName={resolvedUserName}
+        userAvatarUrl={resolvedAvatarUrl}
+        userFallback={resolvedFallback}
         onPostSuccess={onPostCreated}
       />
     </>
   )
 }
+

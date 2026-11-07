@@ -1,3 +1,4 @@
+export * from "./services/auth-service";
 export * from "./components/signin-form";
 export * from "./components/signup-form";
 export * from "./components/social-auth-buttons";

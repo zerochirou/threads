@@ -21,6 +21,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { updateUser } from "@/lib/auth-client"
+import { useSWRConfig } from "swr"
+import { isThreadsCacheKey } from "@/features/content-scrollbar/services/threads-service"
+import { isUserFollowCacheKey } from "@/features/home/services/suggestions-service"
 import type { ProfileUser } from "../types"
 
 export interface EditProfileDialogProps {
@@ -40,36 +44,117 @@ export function EditProfileDialog({
   const [username, setUsername] = React.useState(user.username)
   const [bio, setBio] = React.useState(user.bio || "")
   const [interests, setInterests] = React.useState(
-    user.communities?.join(", ") ||
-      "AnimeThreads, DesignThreads, BusinessThreads, Teacher Threads, Tech Threads"
+    user.interests || user.communities?.join(", ") || ""
   )
-  const [showInstagramBadge, setShowInstagramBadge] = React.useState(false)
-  const [showRecentViews, setShowRecentViews] = React.useState(false)
+  const [podcastUrl, setPodcastUrl] = React.useState(user.podcastUrl || "")
+  const [showInstagramBadge, setShowInstagramBadge] = React.useState(
+    user.showInstagramBadge ?? false
+  )
+  const [showRecentViews, setShowRecentViews] = React.useState(
+    user.showRecentViews ?? false
+  )
+  const [isPrivate, setIsPrivate] = React.useState(user.isPrivate ?? false)
+  const [isSaving, setIsSaving] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [prevOpen, setPrevOpen] = React.useState(open)
+  const { mutate } = useSWRConfig()
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
       setName(user.name)
       setUsername(user.username)
       setBio(user.bio || "")
+      setInterests(user.interests || user.communities?.join(", ") || "")
+      setPodcastUrl(user.podcastUrl || "")
+      setShowInstagramBadge(user.showInstagramBadge ?? false)
+      setShowRecentViews(user.showRecentViews ?? false)
+      setIsPrivate(user.isPrivate ?? false)
+      setError(null)
     }
-    onOpenChange(nextOpen)
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!isSaving) {
+      onOpenChange(nextOpen)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    onSave?.({
-      name: name.trim() || user.name,
-      username: username.trim() || user.username,
-      bio: bio.trim(),
-    })
-    onOpenChange(false)
+    setError(null)
+
+    const trimmedName = name.trim() || user.name
+    const trimmedUsername = username
+      .trim()
+      .toLowerCase()
+      .replace(/^@/, "")
+      .replace(/[^a-z0-9_.]/g, "")
+    const trimmedBio = bio.trim()
+    const trimmedInterests = interests.trim()
+    const trimmedPodcastUrl = podcastUrl.trim()
+
+    if (trimmedUsername && trimmedUsername.length < 3) {
+      setError("Username must be at least 3 characters.")
+      return
+    }
+
+    const updatedFields: Partial<ProfileUser> = {
+      name: trimmedName,
+      username: trimmedUsername || user.username,
+      bio: trimmedBio,
+      interests: trimmedInterests,
+      podcastUrl: trimmedPodcastUrl,
+      showInstagramBadge,
+      showRecentViews,
+      isPrivate,
+      communities: trimmedInterests
+        ? trimmedInterests.split(",").map((s) => s.trim()).filter(Boolean)
+        : [],
+    }
+
+    if (!user.id) {
+      onSave?.(updatedFields)
+      onOpenChange(false)
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const { error: updateError } = await updateUser({
+        name: trimmedName,
+        username: trimmedUsername || user.username,
+        bio: trimmedBio,
+        interests: trimmedInterests,
+        podcastUrl: trimmedPodcastUrl,
+        showInstagramBadge,
+        showRecentViews,
+        isPrivate,
+      })
+
+      if (updateError) {
+        setError(updateError.message || "Could not update profile.")
+        setIsSaving(false)
+        return
+      }
+
+      await mutate(
+        (key) => isThreadsCacheKey(key) || isUserFollowCacheKey(key)
+      )
+      onSave?.(updatedFields)
+      setIsSaving(false)
+      onOpenChange(false)
+    } catch {
+      setError("An unexpected error occurred while saving your profile.")
+      setIsSaving(false)
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-full sm:max-w-[580px] rounded-2xl bg-[#181818] text-white border border-neutral-800 p-0 shadow-2xl overflow-hidden gap-0"
+        className="w-full max-w-[calc(100%-1.5rem)] sm:max-w-[580px] rounded-2xl bg-[#181818] text-white border border-neutral-800 p-0 shadow-2xl overflow-hidden gap-0"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Edit profile</DialogTitle>
@@ -79,9 +164,13 @@ export function EditProfileDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col">
-          {/* Form Fields Container */}
-          <FieldGroup className="p-6 gap-0 divide-y divide-neutral-800/80 max-h-[75vh] overflow-y-auto no-scrollbar">
-            {/* Field 1: Name & Avatar */}
+          {error && (
+            <div className="mx-6 mt-5 rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+              {error}
+            </div>
+          )}
+
+          <FieldGroup className="p-4 sm:p-6 gap-0 divide-y divide-neutral-800/80 max-h-[75dvh] overflow-y-auto no-scrollbar">
             <Field
               orientation="horizontal"
               className="pb-4 items-start justify-between gap-4"
@@ -99,6 +188,7 @@ export function EditProfileDialog({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
+                  disabled={isSaving}
                   className="h-auto border-0 bg-transparent dark:bg-transparent px-0 py-0.5 text-sm text-neutral-200 placeholder:text-neutral-500 shadow-none focus-visible:ring-0"
                 />
               </FieldContent>
@@ -115,7 +205,6 @@ export function EditProfileDialog({
               </Avatar>
             </Field>
 
-            {/* Field 2: Username */}
             <Field className="py-4 gap-1">
               <FieldLabel
                 htmlFor="profile-username"
@@ -128,12 +217,12 @@ export function EditProfileDialog({
                 name="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
+                placeholder="username"
+                disabled={isSaving}
                 className="h-auto border-0 bg-transparent dark:bg-transparent px-0 py-0.5 text-sm text-neutral-200 placeholder:text-neutral-500 shadow-none focus-visible:ring-0"
               />
             </Field>
 
-            {/* Field 3: Bio */}
             <Field className="py-4 gap-1">
               <FieldLabel
                 htmlFor="profile-bio"
@@ -147,11 +236,11 @@ export function EditProfileDialog({
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="+ Write bio"
+                disabled={isSaving}
                 className="h-auto border-0 bg-transparent dark:bg-transparent px-0 py-0.5 text-sm text-neutral-200 placeholder:text-neutral-500 shadow-none focus-visible:ring-0"
               />
             </Field>
 
-            {/* Field 4: Interests */}
             <Field
               orientation="horizontal"
               className="py-4 items-center justify-between gap-3 cursor-pointer group"
@@ -168,14 +257,14 @@ export function EditProfileDialog({
                   name="interests"
                   value={interests}
                   onChange={(e) => setInterests(e.target.value)}
-                  placeholder="Add interests"
+                  placeholder="Add interests (comma separated)"
+                  disabled={isSaving}
                   className="h-auto border-0 bg-transparent dark:bg-transparent px-0 py-0.5 text-xs text-neutral-400 placeholder:text-neutral-500 shadow-none focus-visible:ring-0"
                 />
               </FieldContent>
               <RiArrowRightSLine className="size-5 text-neutral-500 group-hover:text-neutral-300 shrink-0 transition-colors" />
             </Field>
 
-            {/* Field 5: Links */}
             <Field
               orientation="horizontal"
               className="py-4 items-center justify-between gap-3 cursor-pointer group"
@@ -184,28 +273,35 @@ export function EditProfileDialog({
                 Links
               </FieldTitle>
               <div className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-neutral-200 transition-colors w-auto">
-                <span>2</span>
+                <span>{user.link ? (user.link.extraCount ?? 0) + 1 : 0}</span>
                 <RiArrowRightSLine className="size-5 text-neutral-500 group-hover:text-neutral-300 shrink-0" />
               </div>
             </Field>
 
-            {/* Field 6: Podcast */}
             <Field
               orientation="horizontal"
               className="py-4 items-center justify-between gap-3 cursor-pointer group"
             >
-              <FieldContent className="gap-0.5">
-                <FieldTitle className="text-[13px] font-semibold text-white tracking-tight">
+              <FieldContent className="gap-1">
+                <FieldLabel
+                  htmlFor="profile-podcast"
+                  className="text-[13px] font-semibold text-white tracking-tight cursor-pointer"
+                >
                   Podcast
-                </FieldTitle>
-                <FieldDescription className="text-xs text-neutral-500">
-                  + Link to your podcast
-                </FieldDescription>
+                </FieldLabel>
+                <Input
+                  id="profile-podcast"
+                  name="podcastUrl"
+                  value={podcastUrl}
+                  onChange={(e) => setPodcastUrl(e.target.value)}
+                  placeholder="+ Link to your podcast"
+                  disabled={isSaving}
+                  className="h-auto border-0 bg-transparent dark:bg-transparent px-0 py-0.5 text-xs text-neutral-400 placeholder:text-neutral-500 shadow-none focus-visible:ring-0"
+                />
               </FieldContent>
               <RiArrowRightSLine className="size-5 text-neutral-500 group-hover:text-neutral-300 shrink-0 transition-colors" />
             </Field>
 
-            {/* Field 7: Show Instagram badge toggle */}
             <Field
               orientation="horizontal"
               className="py-4 items-center justify-between gap-4"
@@ -220,11 +316,11 @@ export function EditProfileDialog({
                 id="show-ig-badge"
                 checked={showInstagramBadge}
                 onCheckedChange={setShowInstagramBadge}
+                disabled={isSaving}
                 className="data-checked:bg-white data-unchecked:bg-neutral-700 shrink-0 w-auto"
               />
             </Field>
 
-            {/* Field 8: Show recent views toggle */}
             <Field
               orientation="horizontal"
               className="py-4 items-start justify-between gap-4"
@@ -244,34 +340,43 @@ export function EditProfileDialog({
                 id="show-recent-views"
                 checked={showRecentViews}
                 onCheckedChange={setShowRecentViews}
+                disabled={isSaving}
                 className="data-checked:bg-white data-unchecked:bg-neutral-700 shrink-0 mt-0.5 w-auto"
               />
             </Field>
 
-            {/* Field 9: Profile privacy */}
-            <Field className="py-4 gap-1.5 cursor-pointer group">
-              <div className="flex items-center justify-between">
-                <FieldTitle className="text-[13px] font-semibold text-white tracking-tight">
-                  Profile privacy
-                </FieldTitle>
-                <div className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-neutral-200 transition-colors">
-                  <span>Public</span>
-                  <RiArrowRightSLine className="size-5 text-neutral-500 group-hover:text-neutral-300 shrink-0" />
-                </div>
-              </div>
-              <FieldDescription className="text-xs text-neutral-500 leading-relaxed pr-4">
-                If you switch to private, only followers can see your threads. Your replies will be visible to followers and individual profiles you reply to.
-              </FieldDescription>
+            <Field
+              orientation="horizontal"
+              className="py-4 items-start justify-between gap-4"
+            >
+              <FieldContent className="gap-1">
+                <FieldLabel
+                  htmlFor="profile-privacy"
+                  className="text-[13px] font-semibold text-white tracking-tight cursor-pointer"
+                >
+                  Private profile
+                </FieldLabel>
+                <FieldDescription className="text-xs text-neutral-500 leading-relaxed pr-4">
+                  If you switch to private, only followers can see your threads. Your replies will be visible to followers and individual profiles you reply to.
+                </FieldDescription>
+              </FieldContent>
+              <Switch
+                id="profile-privacy"
+                checked={isPrivate}
+                onCheckedChange={setIsPrivate}
+                disabled={isSaving}
+                className="data-checked:bg-white data-unchecked:bg-neutral-700 shrink-0 mt-0.5 w-auto"
+              />
             </Field>
           </FieldGroup>
 
-          {/* Form Footer: Submit Button */}
-          <div className="p-6 pt-2 border-white/5">
+          <div className="p-4 sm:p-6 pt-2 border-white/5">
             <Button
               type="submit"
+              disabled={isSaving}
               className="w-full h-11 rounded-lg bg-white text-black hover:bg-neutral-200 font-bold text-sm cursor-pointer transition-colors active:scale-[0.99] shadow-sm"
             >
-              Done
+              {isSaving ? "Saving..." : "Done"}
             </Button>
           </div>
         </form>
@@ -279,3 +384,4 @@ export function EditProfileDialog({
     </Dialog>
   )
 }
+

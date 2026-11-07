@@ -36,7 +36,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import type { ThreadPostItem } from "@/features/content-scrollbar/types"
 import { ThreadAvatar } from "@/features/content-scrollbar"
+import { useComposerMutations } from "../services/composer-service"
+import { useSession } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
 export interface ThreadEntry {
@@ -50,26 +53,45 @@ export interface PostComposerDialogProps {
   userName?: string
   userAvatarUrl?: string
   userFallback?: string
-  onPostSuccess?: (threads: string[]) => void
+  onPostSuccess?: (threads: string[], createdPost?: ThreadPostItem) => void
 }
 
 export function PostComposerDialog({
   open,
   onOpenChange,
-  userName = "zerochirou",
-  userAvatarUrl = "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=threads-user",
-  userFallback = "ZC",
+  userName,
+  userAvatarUrl,
+  userFallback,
   onPostSuccess,
 }: PostComposerDialogProps) {
+  const { data: sessionData } = useSession()
+  const authUser = sessionData?.user
+  const resolvedUserName =
+    userName ||
+    authUser?.username ||
+    authUser?.email?.split("@")[0]?.toLowerCase() ||
+    "zerochirou"
+  const resolvedAvatarUrl =
+    userAvatarUrl ||
+    authUser?.image ||
+    `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${encodeURIComponent(resolvedUserName)}`
+  const resolvedFallback =
+    userFallback ||
+    (authUser?.name || resolvedUserName).slice(0, 2).toUpperCase()
   const [threads, setThreads] = React.useState<ThreadEntry[]>([
     { id: "thread-1", content: "" },
   ])
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const { createThread } = useComposerMutations()
 
   const textareaRefs = React.useRef<(HTMLTextAreaElement | null)[]>([])
 
   const handleOpenChange = (nextOpen: boolean) => {
+    if (isSubmitting) return
     if (!nextOpen) {
       setThreads([{ id: "thread-1", content: "" }])
+      setError(null)
     }
     onOpenChange(nextOpen)
   }
@@ -87,7 +109,6 @@ export function PostComposerDialog({
       ...prev,
       { id: `thread-${Date.now()}`, content: "" },
     ])
-    // Focus next textarea after render
     setTimeout(() => {
       const lastIndex = threads.length
       textareaRefs.current[lastIndex]?.focus()
@@ -99,13 +120,25 @@ export function PostComposerDialog({
     setThreads((prev) => prev.filter((_, idx) => idx !== indexToRemove))
   }
 
-  const handlePost = () => {
+  const handlePost = async () => {
     const validThreads = threads
       .map((t) => t.content.trim())
       .filter(Boolean)
-    if (validThreads.length === 0) return
-    onPostSuccess?.(validThreads)
+    if (validThreads.length === 0 || isSubmitting) return
+
+    setError(null)
+    setIsSubmitting(true)
+
+    const result = await createThread(validThreads)
+    if (!result.ok) {
+      setError(result.error)
+      setIsSubmitting(false)
+      return
+    }
+
+    onPostSuccess?.(validThreads, result.post)
     setThreads([{ id: "thread-1", content: "" }])
+    setIsSubmitting(false)
     onOpenChange(false)
   }
 
@@ -129,7 +162,7 @@ export function PostComposerDialog({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "w-full max-w-[620px] rounded-2xl bg-[#181818] text-white border border-neutral-800 p-0 shadow-2xl overflow-hidden gap-0"
+          "w-full max-w-[calc(100%-1.5rem)] sm:max-w-[620px] rounded-2xl bg-[#181818] text-white border border-neutral-800 p-0 shadow-2xl overflow-hidden gap-0"
         )}
       >
         <DialogHeader className="sr-only">
@@ -139,8 +172,7 @@ export function PostComposerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Modal Header */}
-        <div className="relative flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="relative flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/5">
           <Button
             type="button"
             variant="ghost"
@@ -209,8 +241,12 @@ export function PostComposerDialog({
           </div>
         </div>
 
-        {/* Composer Content Body (Scrollable for multiple threads) */}
-        <div className="px-6 py-4 max-h-[70vh] overflow-y-auto no-scrollbar">
+        <div className="px-4 sm:px-6 py-4 max-h-[70dvh] overflow-y-auto no-scrollbar">
+          {error && (
+            <div className="mb-3 rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2 text-xs text-red-300">
+              {error}
+            </div>
+          )}
           <div className="flex flex-col">
             {threads.map((thread, index) => {
               const isFirst = index === 0
@@ -219,25 +255,21 @@ export function PostComposerDialog({
 
               return (
                 <div key={thread.id} className="flex items-start gap-3.5 relative">
-                  {/* Avatar & Vertical Thread Connector Column */}
                   <div className="flex flex-col items-center self-stretch shrink-0">
                     <ThreadAvatar
-                      src={userAvatarUrl}
-                      alt={userName}
-                      fallback={userFallback}
+                      src={resolvedAvatarUrl}
+                      alt={resolvedUserName}
+                      fallback={resolvedFallback}
                       size="default"
                     />
-                    {/* Vertical connecting line */}
                     <div className="w-[2px] flex-1 min-h-[50px] bg-neutral-800 my-1 rounded-full" />
                   </div>
 
-                  {/* Thread Item Body */}
                   <div className="flex-1 min-w-0 pb-3">
-                    {/* Top Row: User handle, target & counter badge */}
                     <div className="flex items-center justify-between min-h-6">
                       <div className="flex items-center gap-1.5 text-sm leading-none flex-wrap">
                         <span className="font-semibold text-white tracking-tight">
-                          {userName}
+                          {resolvedUserName}
                         </span>
 
                         {isFirst ? (
@@ -259,7 +291,6 @@ export function PostComposerDialog({
                         )}
                       </div>
 
-                      {/* Remove thread button (only for added threads, not first thread) */}
                       {!isFirst && (
                         <Button
                           type="button"
@@ -274,7 +305,6 @@ export function PostComposerDialog({
                       )}
                     </div>
 
-                    {/* Textarea */}
                     <textarea
                       ref={(el) => {
                         textareaRefs.current[index] = el
@@ -286,8 +316,7 @@ export function PostComposerDialog({
                       className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-white placeholder:text-neutral-500 outline-none border-0 focus:ring-0 p-0 mt-1 selection:bg-neutral-700"
                     />
 
-                    {/* Attachment Toolbar Icons */}
-                    <div className="flex items-center gap-1 pt-2 -ml-1 text-neutral-500">
+                    <div className="flex items-center flex-wrap gap-1 pt-2 -ml-1 text-neutral-500">
                       {toolbarActions.map((action) => (
                         <Tooltip key={action.label}>
                           <TooltipTrigger
@@ -314,20 +343,17 @@ export function PostComposerDialog({
               )
             })}
 
-            {/* "Add to thread" Trigger Row */}
             <div className="flex items-center gap-3.5 pt-1">
-              {/* Mini avatar thumbnail */}
               <div className="flex items-center justify-center size-9 shrink-0">
                 <ThreadAvatar
-                  src={userAvatarUrl}
-                  alt={userName}
-                  fallback={userFallback}
+                  src={resolvedAvatarUrl}
+                  alt={resolvedUserName}
+                  fallback={resolvedFallback}
                   size="sm"
                   className="opacity-60"
                 />
               </div>
 
-              {/* Add to thread clickable text */}
               <button
                 type="button"
                 onClick={addThread}
@@ -339,8 +365,7 @@ export function PostComposerDialog({
           </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-t border-white/5">
           <button
             type="button"
             className="flex items-center gap-2 text-xs font-normal text-neutral-400 hover:text-white transition-colors cursor-pointer group"
@@ -354,11 +379,11 @@ export function PostComposerDialog({
           <Button
             type="button"
             size="sm"
-            disabled={!hasAnyContent}
+            disabled={!hasAnyContent || isSubmitting}
             onClick={handlePost}
             className="rounded-full px-5 h-9 font-semibold text-sm bg-white text-black hover:bg-neutral-200 disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
           >
-            Post
+            {isSubmitting ? "Posting..." : "Post"}
           </Button>
         </div>
       </DialogContent>

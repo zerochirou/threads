@@ -1,4 +1,5 @@
 export * from "./types"
+export * from "./services/search-service"
 export * from "./components/search-header"
 export * from "./components/search-result-item"
 export * from "./components/search-view"

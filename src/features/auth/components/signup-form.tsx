@@ -5,11 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { signUp } from "@/lib/auth-client";
+import {
+  normalizeSignUpUsername,
+  useAuthCacheSync,
+} from "../services/auth-service";
 import { SocialAuthButtons } from "./social-auth-buttons";
 
 export function SignUpForm() {
   const router = useRouter();
+  const { clearAndRevalidateAuthCaches } = useAuthCacheSync();
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,14 +24,23 @@ export function SignUpForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const normalizedUsername = normalizeSignUpUsername(username);
+
+    if (normalizedUsername.length < 3) {
+      setError("Username must be at least 3 characters (letters, numbers, underscores, or dots).");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { error: signUpError } = await signUp.email({
-        name,
-        email,
+        name: name.trim(),
+        username: normalizedUsername,
+        email: email.trim(),
         password,
-        callbackURL: "/",
+        callbackURL: "/profile",
       });
 
       if (signUpError) {
@@ -34,7 +49,8 @@ export function SignUpForm() {
         return;
       }
 
-      router.push("/");
+      await clearAndRevalidateAuthCaches();
+      router.push("/profile");
       router.refresh();
     } catch {
       setError("An unexpected error occurred during sign up.");
@@ -51,7 +67,7 @@ export function SignUpForm() {
         </p>
       </div>
 
-      <SocialAuthButtons />
+      <SocialAuthButtons callbackURL="/profile" />
 
       <div className="relative flex items-center justify-center">
         <div className="w-full border-t border-border" />
@@ -83,6 +99,23 @@ export function SignUpForm() {
         </div>
 
         <div className="space-y-1.5">
+          <label className="text-sm font-medium" htmlFor="username">
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            required
+            minLength={3}
+            maxLength={30}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            placeholder="username"
+          />
+        </div>
+
+        <div className="space-y-1.5">
           <label className="text-sm font-medium" htmlFor="email">
             Email
           </label>
@@ -105,6 +138,7 @@ export function SignUpForm() {
             id="password"
             type="password"
             required
+            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -125,3 +159,4 @@ export function SignUpForm() {
     </div>
   );
 }
+

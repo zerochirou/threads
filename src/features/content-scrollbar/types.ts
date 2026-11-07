@@ -1,12 +1,15 @@
 import type { ReactNode } from "react"
 
 export interface ThreadAuthor {
+  id?: string
+  name?: string
   username: string
   avatarUrl?: string
   fallback: string
   verified?: boolean
   hasFollowBadge?: boolean
   badges?: ReactNode[]
+  badgeIcons?: string[]
 }
 
 export interface ThreadLinkPreview {
@@ -18,6 +21,22 @@ export interface ThreadLinkPreview {
   tagline?: string
 }
 
+export interface ThreadReplyItem {
+  id: string
+  parentThreadId: string
+  author: ThreadAuthor
+  timeAgo: string
+  content: string
+  likeCount: number
+  commentCount?: number
+  repostCount?: number
+  shareCount?: number
+  isLiked?: boolean
+  isSaved?: boolean
+  linkPreview?: ThreadLinkPreview
+  createdAt?: string
+}
+
 export interface ThreadPostItem {
   id: string
   author: ThreadAuthor
@@ -27,6 +46,11 @@ export interface ThreadPostItem {
   commentCount?: number
   repostCount?: number
   shareCount?: number
+  viewsCount?: string
   isLiked?: boolean
+  isSaved?: boolean
   linkPreview?: ThreadLinkPreview
+  parentThreadId?: string | null
+  replies?: ThreadReplyItem[]
 }
+
