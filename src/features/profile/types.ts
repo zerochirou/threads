@@ -1,4 +1,6 @@
 export interface ProfileUser {
+  id?: string
+  email?: string
   name: string
   username: string
   bio?: string
@@ -13,6 +15,15 @@ export interface ProfileUser {
   followersCount: number
   followingCount?: number
   followerAvatars?: string[]
+  verified?: boolean
+  hasFollowBadge?: boolean
+  isPrivate?: boolean
+  showInstagramBadge?: boolean
+  showRecentViews?: boolean
+  podcastUrl?: string
+  interests?: string
+  isFollowing?: boolean
+  isSelf?: boolean
 }
 
 export interface SetupCardItem {
@@ -29,5 +40,8 @@ export interface FollowerUserItem {
   username: string
   fullName: string
   avatarUrl?: string
+  verified?: boolean
   isFollowing?: boolean
+  isSelf?: boolean
 }
+

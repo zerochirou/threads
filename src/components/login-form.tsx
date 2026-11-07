@@ -10,12 +10,9 @@ import {
   Field,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { signIn } from "@/lib/auth-client"
-import { RiGalleryLine, RiGithubFill, RiGoogleFill } from "@remixicon/react"
+import Image from "next/image"
 
 export function LoginForm({
   className,
@@ -32,23 +29,30 @@ export function LoginForm({
     setIsLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const email = formData.get("email") as string
+    const identifier = (formData.get("identifier") as string)?.trim() || ""
     const password = formData.get("password") as string
 
     try {
-      const { error: authError } = await signIn.email({
-        email,
-        password,
-        callbackURL: "/",
-      })
+      const isEmail = identifier.includes("@")
+      const { error: authError } = isEmail
+        ? await signIn.email({
+            email: identifier,
+            password,
+            callbackURL: "/profile",
+          })
+        : await signIn.username({
+            username: identifier.replace(/^@/, ""),
+            password,
+            callbackURL: "/profile",
+          })
 
       if (authError) {
-        setError(authError.message || "Invalid email or password.")
+        setError(authError.message || "Invalid credentials.")
         setIsLoading(false)
         return
       }
 
-      router.push("/")
+      router.push("/profile")
       router.refresh()
     } catch {
       setError("An unexpected error occurred. Please try again.")
@@ -82,12 +86,15 @@ export function LoginForm({
               href="/"
               className="flex flex-col items-center gap-2 font-medium"
             >
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <RiGalleryLine className="size-6" />
-              </div>
+              <Image
+                src={"/favicon.ico"}
+                alt="Zerochirou"
+                width={50}
+                height={50}
+              />
               <span className="sr-only">Threads</span>
             </Link>
-            <h1 className="text-xl font-bold">Welcome back</h1>
+            <h1 className="text-xl font-bold">Zerochirou Gate</h1>
             <FieldDescription>
               Don&apos;t have an account? <Link href="/signup">Sign up</Link>
             </FieldDescription>
@@ -99,43 +106,19 @@ export function LoginForm({
             </div>
           )}
 
-          <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="m@example.com"
-              required
-              disabled={isPending}
-            />
-          </Field>
-          <Field>
-            <div className="flex items-center">
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-            </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              disabled={isPending}
-            />
-          </Field>
-          <Field>
-            <Button type="submit" disabled={isPending}>
-              {isLoading ? "Signing in..." : "Login"}
-            </Button>
-          </Field>
-          <FieldSeparator>Or</FieldSeparator>
-          <Field className="grid gap-4 sm:grid-cols-2">
+          <Field className="grid gap-4 sm:grid-cols-1">
             <Button
               variant="outline"
               type="button"
               disabled={isPending}
               onClick={() => handleSocialSignIn("github")}
             >
-              <RiGithubFill className="size-4" />
+              <Image
+                src={"/assets/icons/github.svg"}
+                alt=""
+                width={20}
+                height={20}
+              />
               Continue with GitHub
             </Button>
             <Button
@@ -144,16 +127,21 @@ export function LoginForm({
               disabled={isPending}
               onClick={() => handleSocialSignIn("google")}
             >
-              <RiGoogleFill className="size-4" />
+              <Image
+                src={"/assets/icons/google.svg"}
+                alt=""
+                width={20}
+                height={20}
+              />
               Continue with Google
             </Button>
           </Field>
         </FieldGroup>
       </form>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Properti atau website ini merupakan sebuah cloning dari{" "}
+        <a href="https://www.threads.com">Threads</a> dan bukan website komersial. Sebatas karya (cloning)
       </FieldDescription>
     </div>
-  )
+  );
 }

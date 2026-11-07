@@ -20,7 +20,7 @@ export function SearchBar({
 }: SearchBarProps) {
   return (
     <div className={cn("relative w-full", className)}>
-      <RiSearchLine className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground select-none" />
+      <RiSearchLine className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground  " />
       <Input
         type="search"
         value={value}

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { RiEditLine, RiCheckLine, RiArrowRightLine, RiEditBoxLine } from "@remixicon/react"
+import { RiEditLine, RiArrowRightLine, RiEditBoxLine } from "@remixicon/react"
 import { Button } from "@/components/ui/button"
 import type { SetupCardItem } from "../types"
 import { cn } from "@/lib/utils"

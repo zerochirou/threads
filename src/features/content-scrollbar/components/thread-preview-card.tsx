@@ -42,7 +42,7 @@ export function ThreadPreviewCard({ preview, className }: ThreadPreviewCardProps
         </div>
 
         {/* Astronaut & Moon Background Illustration */}
-        <div className="absolute inset-0 pointer-events-none select-none">
+        <div className="absolute inset-0 pointer-events-none  ">
           {/* Glowing Moon */}
           <div className="absolute -top-4 right-10 sm:right-20 size-48 sm:size-64 rounded-full bg-gradient-to-b from-white/95 via-neutral-200/80 to-transparent blur-[0.5px] opacity-85 shadow-[0_0_50px_rgba(255,255,255,0.15)]" />
           <div className="absolute top-10 right-28 sm:right-36 size-12 rounded-full bg-neutral-400/20 blur-xs" />

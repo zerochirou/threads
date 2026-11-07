@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Threads Clone
+
+A modern, high-performance social web application inspired by Instagram Threads, built with Next.js 16 (App Router), React 19, Better Auth, and Drizzle ORM, optimized for Cloudflare Workers via OpenNext.
+
+## Tech Stack
+
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router & Proxy)
+- **UI Library:** React 19, Tailwind CSS v4, Base UI, Lucide/Remixicon
+- **Authentication:** [Better Auth](https://www.better-auth.com/) (Drizzle adapter, Credentials & OAuth providers)
+- **Database & ORM:** Cloudflare D1 (SQLite) with [Drizzle ORM](https://orm.drizzle.team/)
+- **Data Fetching:** [SWR](https://swr.vercel.app/) with optimistic caching and real-time event updates
+- **Deployment:** Cloudflare Workers via [@opennextjs/cloudflare](https://github.com/opennextjs/opennextjs-cloudflare)
+
+## Features
+
+- **Threads & Feed:** Create nested threads, like, reply, and bookmark posts.
+- **Comment & Post Management:** Delete personal threads and comments with automated cascading and count synchronisation.
+- **Protected Routing:** Edge proxy redirecting unauthenticated users to `/signin` for private interactions and pages.
+- **Social & Profile:** User profile customization, bio and interest tags, follow/unfollow functionality, and follower lists.
+- **Search & Discovery:** Debounced user search and follow suggestions.
+- **Theme Support:** Dark and light mode toggle powered by `next-themes`.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- [pnpm](https://pnpm.io/) (v12.x recommended)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
+
+### Environment Variables
+
+Copy the example environment files:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
+cp .dev.vars.example .dev.vars
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Configure your secrets:
+- `BETTER_AUTH_SECRET`: Random 32+ character string
+- `BETTER_AUTH_URL`: Your application URL (e.g., `http://localhost:3000`)
+- Optional OAuth credentials (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm install
+```
 
-## Learn More
+### Database Setup
 
-To learn more about Next.js, take a look at the following resources:
+Generate and apply local D1 migrations:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Generate schema migrations
+pnpm db:generate
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Apply migrations locally
+pnpm db:migrate:local
+```
 
-## Deploy on Vercel
+### Development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Run the development server:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+## Testing & Quality Assurance
+
+```bash
+# Linting
+pnpm lint
+
+# TypeScript verification
+pnpm typecheck
+```
+
+Git hooks are automated via [Husky](https://typicode.github.io/husky/):
+- **pre-commit:** runs `lint-staged` on staged files.
+- **pre-push:** runs full TypeScript typechecking (`pnpm typecheck`).
+
+## Deployment
+
+The project is configured for Cloudflare Workers.
+
+### Automated CI/CD (GitHub Actions)
+
+A workflow is provided in `.github/workflows/deploy.yml`. To enable automated deployment on push to `main`:
+Add the following repository secrets in GitHub:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`
+
+### Manual Deployment
+
+```bash
+# Preview build locally with OpenNext
+pnpm preview
+
+# Deploy migrations to remote Cloudflare D1
+pnpm db:migrate:remote
+
+# Build and deploy to Cloudflare Workers
+pnpm deploy
+```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

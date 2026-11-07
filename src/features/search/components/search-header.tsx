@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RiSearchLine, RiEqualizer2Line, RiMoreFill } from "@remixicon/react";
+import { RiSearchLine, RiEqualizer2Line } from "@remixicon/react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -86,7 +86,10 @@ export function SearchHeader({
           />
           <TooltipContent side="bottom">More</TooltipContent>
         </Tooltip>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent
+          align="end"
+          className="w-48 rounded-sm p-1.5 shadow-xl bg-accent"
+        >
           <DropdownMenuItem className="cursor-pointer">
             Search settings
           </DropdownMenuItem>

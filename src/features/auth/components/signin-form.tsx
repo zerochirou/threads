@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
+import { isEmailIdentifier, useAuthCacheSync } from "../services/auth-service";
 import { SocialAuthButtons } from "./social-auth-buttons";
 
 export function SignInForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const { clearAndRevalidateAuthCaches } = useAuthCacheSync();
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,12 +21,21 @@ export function SignInForm() {
     setError(null);
     setIsLoading(true);
 
+    const trimmedIdentifier = identifier.trim();
+
     try {
-      const { error: signInError } = await signIn.email({
-        email,
-        password,
-        callbackURL: "/",
-      });
+      const isEmail = isEmailIdentifier(trimmedIdentifier);
+      const { error: signInError } = isEmail
+        ? await signIn.email({
+            email: trimmedIdentifier,
+            password,
+            callbackURL: "/profile",
+          })
+        : await signIn.username({
+            username: trimmedIdentifier.replace(/^@/, ""),
+            password,
+            callbackURL: "/profile",
+          });
 
       if (signInError) {
         setError(signInError.message || "Failed to sign in. Please verify your credentials.");
@@ -32,7 +43,8 @@ export function SignInForm() {
         return;
       }
 
-      router.push("/");
+      await clearAndRevalidateAuthCaches();
+      router.push("/profile");
       router.refresh();
     } catch {
       setError("An unexpected error occurred during sign in.");
@@ -49,7 +61,7 @@ export function SignInForm() {
         </p>
       </div>
 
-      <SocialAuthButtons />
+      <SocialAuthButtons callbackURL="/profile" />
 
       <div className="relative flex items-center justify-center">
         <div className="w-full border-t border-border" />
@@ -66,17 +78,17 @@ export function SignInForm() {
         )}
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium" htmlFor="email">
-            Email
+          <label className="text-sm font-medium" htmlFor="identifier">
+            Email or Username
           </label>
           <input
-            id="email"
-            type="email"
+            id="identifier"
+            type="text"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            placeholder="you@example.com"
+            placeholder="username or you@example.com"
           />
         </div>
 

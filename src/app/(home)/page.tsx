@@ -4,18 +4,19 @@ import { FollowSuggestions } from "@/features/home";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background flex justify-center">
-      {/* Kolom Kiri: flex-1 menyerap sisa ruang di kiri */}
-      <div className="flex-1 flex justify-start">
+    <div className="min-h-dvh bg-background flex justify-center">
+      <div className="hidden md:flex md:flex-1 justify-start">
         <Sidebar className="sticky top-0" />
       </div>
 
-      {/* Kolom Tengah: feed dengan ukuran pasti (668px), berada tepat di tengah layar */}
-      <main className="w-full max-w-[668px] shrink-0 overflow-hidden">
+      <main className="w-full max-w-[668px] shrink-0 overflow-x-hidden">
         <ContentScrollbar />
       </main>
 
-      {/* Kolom Kanan: flex-1 menyerap sisa ruang yang sama di kanan */}
+      <div className="md:hidden">
+        <Sidebar />
+      </div>
+
       <div className="flex-1 hidden xl:flex justify-end">
         <FollowSuggestions className="sticky top-0" />
       </div>

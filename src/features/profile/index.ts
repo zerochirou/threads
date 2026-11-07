@@ -1,4 +1,5 @@
 export * from "./types"
+export * from "./services/profile-service"
 export * from "./components/profile-header-nav"
 export * from "./components/profile-bio"
 export * from "./components/finish-profile-cards"

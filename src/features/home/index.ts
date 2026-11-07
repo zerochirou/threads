@@ -1,4 +1,5 @@
 export * from "./types"
+export * from "./services/suggestions-service"
 export * from "./components/search-bar"
 export * from "./components/follow-item"
 export * from "./components/home-footer"
