@@ -87,7 +87,7 @@ function renderFormattedText(
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="text-sky-400 hover:underline font-medium"
+            className="text-sky-500 hover:underline font-medium"
           >
             {matchedText}
           </Link>
@@ -228,7 +228,7 @@ export function ThreadCard({
                   {post.author.username}
                 </Link>
                 {post.author.verified && (
-                  <RiVerifiedBadgeFill className="size-3.5 text-muted-foreground/80" />
+                  <RiVerifiedBadgeFill className="size-4 text-sky-500" />
                 )}
                 <span className="text-xs text-muted-foreground">
                   {post.timeAgo}
@@ -301,6 +301,18 @@ export function ThreadCard({
               : post.content}
           </div>
 
+          {post.imageUrl && (
+            <div className="relative w-full overflow-hidden rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 my-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.imageUrl}
+                alt="Post attachment"
+                className="w-full h-auto max-h-[500px] object-cover sm:object-contain bg-neutral-950/40"
+                loading="lazy"
+              />
+            </div>
+          )}
+
           {post.linkPreview && <ThreadPreviewCard preview={post.linkPreview} />}
 
           <ThreadActions
@@ -337,7 +349,7 @@ export function ThreadCard({
                 {post.author.username}
               </Link>
               {post.author.verified && (
-                <RiVerifiedBadgeFill className="size-3.5 text-muted-foreground/80" />
+                <RiVerifiedBadgeFill className="size-4 text-sky-500" />
               )}
               <button
                 type="button"
@@ -446,6 +458,24 @@ export function ThreadCard({
                 )
               : post.content}
           </div>
+
+          {post.imageUrl && (
+            <div
+              onClick={!isDetailMain ? handleOpenThread : undefined}
+              className={cn(
+                "relative w-fit overflow-hidden rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 my-1",
+                !isDetailMain && "cursor-pointer"
+              )}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.imageUrl}
+                alt="Post attachment"
+                className="w-fit h-auto max-h-[480px] object-cover sm:object-contain bg-neutral-950/40"
+                loading="lazy"
+              />
+            </div>
+          )}
 
           {post.linkPreview && <ThreadPreviewCard preview={post.linkPreview} />}
 

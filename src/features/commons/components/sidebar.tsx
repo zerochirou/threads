@@ -118,7 +118,7 @@ export function Sidebar({ className }: SidebarProps) {
     <>
       <aside
         className={cn(
-          "hidden md:flex md:w-20 lg:w-60 shrink-0 min-h-screen bg-white dark:bg-[#101010] text-neutral-900 dark:text-[#e7e9eb] border-r border-neutral-200/60 dark:border-neutral-900/40 flex-col justify-between px-2.5 lg:px-3.5 pt-5 pb-8 select-none font-sans transition-colors duration-200",
+          "hidden md:flex md:w-20 lg:w-60 shrink-0 h-dvh max-h-screen sticky top-0 bg-white dark:bg-[#101010] text-neutral-900 dark:text-[#e7e9eb] border-r border-neutral-200/60 dark:border-neutral-900/40 flex-col justify-between px-2.5 lg:px-3.5 pt-5 pb-8 select-none font-sans transition-colors duration-200 overflow-y-auto no-scrollbar",
           className
         )}
       >

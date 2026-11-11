@@ -25,20 +25,20 @@ export function FollowSuggestions({
   const { suggestions, toggleFollow } = useFollowSuggestions(initialSuggestions)
 
   const filteredSuggestions = React.useMemo(
-    () => filterFollowSuggestions(suggestions, searchQuery),
+    () => filterFollowSuggestions(suggestions, searchQuery).slice(0, 5),
     [suggestions, searchQuery]
   )
 
   return (
     <aside
       className={cn(
-        "w-82.5 shrink-0 h-screen hidden xl:flex flex-col",
+        "w-82.5 shrink-0 h-dvh max-h-screen hidden xl:flex flex-col sticky top-0 overflow-hidden",
         className
       )}
     >
       <ScrollArea
         className={cn(
-          "flex-1 w-full pl-6 pr-4 pt-4",
+          "flex-1 min-h-0 w-full pl-6 pr-4 pt-4 overflow-y-auto",
           "no-scrollbar **:data-[slot=scroll-area-scrollbar]:hidden **:data-[slot=scroll-area-viewport]:no-scrollbar"
         )}
       >

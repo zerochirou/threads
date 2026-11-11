@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
           .from(schema.user)
           .where(not(eq(schema.user.id, currentUserId)))
           .orderBy(desc(schema.user.createdAt))
-          .limit(20)
+          .limit(5)
       : await db
           .select()
           .from(schema.user)
           .orderBy(desc(schema.user.createdAt))
-          .limit(20);
+          .limit(5);
 
     const userIds = usersQuery.map((u) => u.id);
 

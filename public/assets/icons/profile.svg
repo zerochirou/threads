@@ -1,8 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-  <style>
-    :root { color: #000000; }
-    @media (prefers-color-scheme: dark) { :root { color: #ffffff; } }
-  </style>
   <path d="M12 14c4.912 0 9.06 3.26 10.454 7.7a1 1 0 0 1-1.908.6C19.402 18.66 16.004 16 12 16s-7.403 2.66-8.546 6.3a1 1 0 0 1-1.908-.6C2.94 17.26 7.087 14 12 14z"/>
   <path fill-rule="evenodd" clip-rule="evenodd" d="M12 1a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/>
 </svg>

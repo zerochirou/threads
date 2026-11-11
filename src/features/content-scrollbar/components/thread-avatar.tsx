@@ -4,7 +4,6 @@ import * as React from "react"
 import { RiAddLine } from "@remixicon/react"
 import {
   Avatar,
-  AvatarBadge,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
@@ -34,9 +33,13 @@ export function ThreadAvatar({
         {fallback}
       </AvatarFallback>
       {hasFollowBadge && (
-        <AvatarBadge className="bg-foreground text-background ring-2 ring-card size-3.5 p-0 flex items-center justify-center">
-          <RiAddLine className="size-2.5 stroke-[2]" />
-        </AvatarBadge>
+        <span
+          data-slot="thread-avatar-badge"
+          className="absolute -bottom-1 -right-1 z-10 flex size-4 items-center justify-center rounded-full bg-white text-black ring-2 ring-background shadow-xs select-none dark:bg-white dark:text-black"
+          aria-hidden="true"
+        >
+          <RiAddLine className="size-3 stroke-[2.5]" />
+        </span>
       )}
     </Avatar>
   )

@@ -50,6 +50,7 @@ export interface ThreadPostItem {
   isLiked?: boolean
   isSaved?: boolean
   linkPreview?: ThreadLinkPreview
+  imageUrl?: string
   parentThreadId?: string | null
   replies?: ThreadReplyItem[]
 }

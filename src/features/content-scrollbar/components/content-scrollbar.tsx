@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import type { ThreadPostItem } from "../types"
+import { DEFAULT_POSTS } from "../constants/default-posts"
 import { useThreadsFeed } from "../services/threads-service"
 import { FeedHeader } from "./feed-header"
 import { PostComposer } from "@/features/composer"
@@ -21,6 +22,7 @@ export function ContentScrollbar({
   feedTitle = "For you",
 }: ContentScrollbarProps) {
   const { posts, toggleLike, toggleSave, prependPost, removePost } = useThreadsFeed(initialPosts)
+  const [persistedDefaultPosts, setPersistedDefaultPosts] = React.useState<ThreadPostItem[]>(DEFAULT_POSTS)
 
   React.useEffect(() => {
     const handlePostCreated = (event: Event) => {
@@ -35,6 +37,7 @@ export function ContentScrollbar({
       const deletedId = customEvent.detail?.threadId
       if (!deletedId) return
       void removePost(deletedId)
+      setPersistedDefaultPosts((prev) => prev.filter((p) => p.id !== deletedId))
     }
 
     window.addEventListener("threads:post-created", handlePostCreated)
@@ -44,6 +47,37 @@ export function ContentScrollbar({
       window.removeEventListener("threads:thread-deleted", handleThreadDeleted)
     }
   }, [prependPost, removePost])
+
+  const handleToggleDefaultLike = (postId: string) => {
+    setPersistedDefaultPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post
+        const nextLiked = !post.isLiked
+        return {
+          ...post,
+          isLiked: nextLiked,
+          likeCount: Math.max(0, post.likeCount + (nextLiked ? 1 : -1)),
+        }
+      })
+    )
+  }
+
+  const handleToggleDefaultSave = (postId: string, nextSaved: boolean) => {
+    setPersistedDefaultPosts((prev) =>
+      prev.map((post) => (post.id === postId ? { ...post, isSaved: nextSaved } : post))
+    )
+  }
+
+  const handleRemoveDefaultPost = (postId: string) => {
+    setPersistedDefaultPosts((prev) => prev.filter((p) => p.id !== postId))
+  }
+
+  // Combine hard-coded default posts on top followed by dynamic feed posts
+  const combinedPosts = React.useMemo(() => {
+    const defaultIds = new Set(persistedDefaultPosts.map((p) => p.id))
+    const filteredFeedPosts = (posts || []).filter((p) => !defaultIds.has(p.id))
+    return [...persistedDefaultPosts, ...filteredFeedPosts]
+  }, [persistedDefaultPosts, posts])
 
   return (
     <ScrollArea
@@ -59,15 +93,18 @@ export function ContentScrollbar({
         <div className="w-full md:rounded-xl border-y md:border border-neutral-200/90 dark:border-neutral-800/80 text-card-foreground shadow-xs overflow-hidden divide-y divide-neutral-200/70 dark:divide-neutral-800/70">
           <PostComposer />
 
-          {posts && posts.map((post) => (
-            <ThreadCard
-              key={post.id}
-              post={post}
-              onToggleLike={toggleLike}
-              onToggleSave={toggleSave}
-              onDeleted={removePost}
-            />
-          ))}
+          {combinedPosts.map((post) => {
+            const isDefault = post.id.startsWith("default-post-")
+            return (
+              <ThreadCard
+                key={post.id}
+                post={post}
+                onToggleLike={isDefault ? handleToggleDefaultLike : toggleLike}
+                onToggleSave={isDefault ? handleToggleDefaultSave : toggleSave}
+                onDeleted={isDefault ? handleRemoveDefaultPost : removePost}
+              />
+            )
+          })}
         </div>
       </div>
     </ScrollArea>

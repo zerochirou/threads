@@ -12,6 +12,7 @@ import type {
   ThreadPostItem,
   ThreadReplyItem,
 } from "@/features/content-scrollbar/types";
+import { DEFAULT_POSTS } from "@/features/content-scrollbar/constants/default-posts";
 
 export async function GET(
   request: NextRequest,
@@ -19,6 +20,18 @@ export async function GET(
 ) {
   try {
     const { id: threadId } = await context.params;
+
+    const defaultMatch = DEFAULT_POSTS.find((p) => p.id === threadId);
+    if (defaultMatch) {
+      return NextResponse.json({
+        post: {
+          ...defaultMatch,
+          viewsCount: defaultMatch.viewsCount ?? "6K views",
+          replies: defaultMatch.replies ?? [],
+        },
+      });
+    }
+
     const db = await getDb();
     await ensureDemoThreadsSeeded(db);
 

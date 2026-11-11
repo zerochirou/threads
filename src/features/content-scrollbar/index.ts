@@ -1,4 +1,5 @@
 export * from "./types"
+export * from "./constants/default-posts"
 export * from "./services/threads-service"
 export * from "./components/content-scrollbar"
 export * from "./components/feed-header"
